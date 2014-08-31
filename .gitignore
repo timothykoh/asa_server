@@ -1,0 +1,6 @@
+.DS_Store
+.DS_Store?
+node_modules
+
+image_store/news/*
+image_store/event/*
