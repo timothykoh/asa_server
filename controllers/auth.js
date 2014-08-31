@@ -42,7 +42,10 @@ module.exports = function(app, models){
     });
 
     app.post("/auth/logout", function(req, res){
-        delete req.session;
+        console.log(req.session);
+        req.session.destroy();
+        console.log("logging out");
+        console.log(req.session);
         res.send({status: "success"});
     });
 }
