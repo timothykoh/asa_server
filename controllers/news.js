@@ -6,6 +6,7 @@ module.exports = function(app, models){
     app.post("/news/create", function(req, res){
         if (req.session.user === undefined){
             res.send({status: "error", error: "User is not logged in."});
+            return;
         }
         var newsDetails = req.body.newsDetails;
         models.News.createNews(newsDetails, req.session.user.user_id)

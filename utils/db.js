@@ -1,5 +1,5 @@
 var pg = require("pg");
-var conString = "postgres://tim:@localhost/asa_db";
+var conString = "postgres://tim:persuasiveinaction@localhost/asa_db";
 var async = require("async");
 var Promise = require("es6-promise").Promise;
 
