@@ -18,9 +18,10 @@ app.use(session({
 // }));
 
 app.use(express.json({limit: "50mb"}));
-app.use(cors({origin:"http://23.92.65.89:8000", credentials: true}));
+// app.use(cors({origin:"http://app.cmuasa.org", credentials: true}));
+// app.use(cors({origin:"http://23.92.65.89:8000", credentials: true}));
 // app.use(cors({origin:"http://asa.timothykoh.com:8000", credentials: true}));
-// app.use(cors({origin:"http://localhost:8000", credentials: true}));
+app.use(cors({origin:"http://localhost:8000", credentials: true}));
 // app.use(cors({origin:"http://192.168.1.132:8000", credentials: true}));
 // app.use(cors({origin:"http://128.237.205.212:8000", credentials: true}));
 

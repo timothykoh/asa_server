@@ -97,7 +97,7 @@ function Init(db){
     this.dropAllTables = function(){
         db.query({
             queryString: "" +
-                "DROP TABLE users cascade;" +
+                // "DROP TABLE users cascade;" +
                 "DROP TABLE event cascade;" +
                 "DROP TABLE task cascade;" +
                 "DROP TABLE event_to_task cascade;" +
