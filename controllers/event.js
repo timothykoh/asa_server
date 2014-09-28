@@ -4,10 +4,8 @@ module.exports = function(app, models){
     var _imgBasePath = "image_store/event/";
 
     // Two things happen async in this function:
-    // 1. creation of the event followed writing image to disk
-    // 2. creation of tasks for the event
-    // once both are complete, associate the event with the tasks
-    var _createEvent = function(eventDetails, imgData, tasks){
+    // creation of the event followed writing image to disk
+    var _createEvent = function(eventDetails, imgData){
         var eventPromise = models.Event.createEvent(eventDetails).then(function(eventId){
             var filePath = _imgBasePath + eventId;
             return models.Image.createImage(filePath, imgData).then(function(){
@@ -15,21 +13,23 @@ module.exports = function(app, models){
             });
         });
 
-        if (tasks.length === 0){
-            console.log("no tasks, returning event promise");
-            return eventPromise;
-        } else{
-            // build query string for tasks async while event query is being made
-            var taskPromise = models.Task.createMultipleTasks(tasks);            
+        return eventPromise;
 
-            // associate each task_id with the event_id of the newly created event
-            // then add it to the db
-            return Promise.all([eventPromise, taskPromise]).then(function(values){
-                var eventId = values[0];
-                var task_idArr = values[1];
-                return models.Event.addTasksToEvent(eventId, task_idArr);
-            });
-        }
+        // if (tasks.length === 0){
+        //     console.log("no tasks, returning event promise");
+        //     return eventPromise;
+        // } else{
+        //     // build query string for tasks async while event query is being made
+        //     var taskPromise = models.Task.createMultipleTasks(tasks);
+
+        //     // associate each task_id with the event_id of the newly created event
+        //     // then add it to the db
+        //     return Promise.all([eventPromise, taskPromise]).then(function(values){
+        //         var eventId = values[0];
+        //         var task_idArr = values[1];
+        //         return models.Event.addTasksToEvent(eventId, task_idArr);
+        //     });
+        // }
     };
 
         
@@ -41,7 +41,7 @@ module.exports = function(app, models){
         var eventDetails = req.body.eventDetails;
         eventDetails.createdBy = req.session.user.user_id;
         
-        _createEvent(eventDetails, req.body.imgData, req.body.tasks).then(function(results){
+        _createEvent(eventDetails, req.body.imgData).then(function(results){
             res.send({status: "success"});
         }, function(err){
             console.error(err);
@@ -53,9 +53,9 @@ module.exports = function(app, models){
         models.Event.getEvents().then(function(eventObjArr){
             eventObjArr.map(function(eventObj){
                 var dateObj = eventObj.date;
-                eventObj.date = dateObj.getMonth() + "/" +
-                                dateObj.getDate() + "/" + 
-                                dateObj.getFullYear();
+                eventObj.date = (dateObj.getUTCMonth() + 1) + "/" +
+                                dateObj.getUTCDate() + "/" + 
+                                dateObj.getUTCFullYear();
             });
             res.send({status: "success", results: eventObjArr});
         }, function(err){

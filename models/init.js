@@ -35,7 +35,41 @@ function Init(db){
         queryString: "CREATE TABLE IF NOT EXISTS task(\
                             task_id         serial primary key,\
                             name            varchar(50) not null,\
-                            num_people      int\
+                            created_by      int,\
+                            date_created    timestamp default current_timestamp,\
+                            FOREIGN KEY(created_by) REFERENCES users(user_id) ON DELETE CASCADE\
+                        );",
+        argumentArray: []
+    };
+
+    var _createTaskTimeslotQuery = {
+        queryString: "CREATE TABLE IF NOT EXISTS task_timeslot(\
+                            task_timeslot_id        serial primary key,\
+                            date                    date,\
+                            timeslot                int,\
+                            num_people              int\
+                        );",
+        argumentArray: []
+    };
+
+    var _createTaskToTimeslotQuery = {
+        queryString: "CREATE TABLE IF NOT EXISTS task_to_timeslot(\
+                            task_id             int,\
+                            task_timeslot_id    int,\
+                            FOREIGN KEY(task_id) REFERENCES task(task_id) ON DELETE CASCADE,\
+                            FOREIGN KEY(task_timeslot_id) REFERENCES task_timeslot(task_timeslot_id) ON DELETE CASCADE,\
+                            PRIMARY KEY(task_id, task_timeslot_id)\
+                        );",
+        argumentArray: []
+    };
+
+    var _createTimeslotToUserQuery = {
+        queryString: "CREATE TABLE IF NOT EXISTS timeslot_to_user(\
+                            task_timeslot_id        int,\
+                            user_id                 int,\
+                            FOREIGN KEY(task_timeslot_id) REFERENCES task_timeslot(task_timeslot_id) ON DELETE CASCADE,\
+                            FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,\
+                            PRIMARY KEY(task_timeslot_id, user_id)\
                         );",
         argumentArray: []
     };
@@ -100,6 +134,9 @@ function Init(db){
                 // "DROP TABLE users cascade;" +
                 "DROP TABLE event cascade;" +
                 "DROP TABLE task cascade;" +
+                "DROP TABLE task_timeslot cascade;" +
+                "DROP TABLE task_to_timeslot cascade;" +
+                "DROP TABLE timeslot_to_user cascade;" +
                 "DROP TABLE event_to_task cascade;" +
                 "DROP TABLE news cascade;" +
                 "DROP TABLE expense cascade;" +
@@ -116,6 +153,9 @@ function Init(db){
         var queryObjArr = [_createUserQuery,
                            _createEventsQuery,
                            _createTasksQuery,
+                           _createTaskTimeslotQuery,
+                           _createTaskToTimeslotQuery,
+                           _createTimeslotToUserQuery,
                            _createEventToTaskQuery,
                            _createNewsQuery,
                            _createExpenseQuery,

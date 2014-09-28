@@ -5,7 +5,8 @@ module.exports = function(app, models){
             return;
         }
         var eventId = req.query.eventId;
-        models.Task.getTasksForEvent(eventId)
+        var userId = req.session.user.user_id;
+        models.Task.getTasksForEvent(eventId, userId)
         .then(function(taskObjArr){
             res.send({status: "success", results: taskObjArr});
         }, function(err){
@@ -18,9 +19,12 @@ module.exports = function(app, models){
             res.send({status: "error", error: "User does not have the rights to create tasks"});
             return;
         }
-        models.Task.createTask(req.body.taskDetails, req.body.eventId)
-        .then(function(taskObj){
-            res.send({status: "success", results: taskObj});
+        var taskDetails = req.body.taskDetails;
+        taskDetails.createdBy = req.session.user.user_id;
+
+        models.Task.createTask(taskDetails, req.body.eventId)
+        .then(function(){
+            res.send({status: "success"});
         }, function(err){
             console.error(err);
             res.send({status: "error", error: err});
@@ -33,6 +37,34 @@ module.exports = function(app, models){
             return;
         }
         models.Task.deleteTask(req.body.taskId, req.body.eventId)
+        .then(function(){
+            res.send({status: "success"});
+        }, function(err){
+            console.error(err);
+            res.send({status: "error", error: err});
+        });
+    });
+
+    app.post("/task/timeslot/signup", function(req, res){
+        if (req.session.user === undefined){
+            res.send({status: "error", error: "User is not logged in."});
+            return;
+        }
+        models.Task.addUserToTimeSlot(req.body.timeSlotId, req.session.user.user_id)
+        .then(function(){
+            res.send({status: "success"});
+        }, function(err){
+            console.error(err);
+            res.send({status: "error", error: err});
+        });
+    });
+
+    app.post("/task/timeslot/cancel", function(req, res){
+        if (req.session.user === undefined){
+            res.send({status: "error", error: "User is not logged in."});
+            return;
+        }
+        models.Task.cancelTimeSlot(req.body.timeSlotId, req.session.user.user_id)
         .then(function(){
             res.send({status: "success"});
         }, function(err){
