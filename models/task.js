@@ -236,7 +236,7 @@ function Task(db){
         });
     };
 
-    this.deleteTask = function(taskId, eventId){
+    this.deleteTask = function(taskId){
         return db.query({
             queryString: "DELETE FROM task\
                           WHERE task_id = $1;",

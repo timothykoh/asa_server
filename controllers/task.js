@@ -36,8 +36,8 @@ module.exports = function(app, models){
             res.send({status: "error", error: "User does not have the rights to delete tasks"});
             return;
         }
-        models.Task.deleteTask(req.body.taskId, req.body.eventId)
-        .then(function(){
+        models.Task.deleteTask(req.body.taskId)
+        .then(function(results){
             res.send({status: "success"});
         }, function(err){
             console.error(err);
