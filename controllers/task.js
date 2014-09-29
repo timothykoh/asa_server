@@ -4,6 +4,20 @@ module.exports = function(app, models){
             res.send({status: "error", error: "User does not have the rights to access tasks"});
             return;
         }
+        var taskId = req.query.taskId;
+        var userId = req.session.user.user_id;
+        models.Task.getTask(taskId, userId)
+        .then(function(taskObj){
+            res.send({status: "success", results: taskObj});
+        }, function(err){
+            res.send({status: "error", error: err});
+        });
+    });
+    app.get("/task/by_event", function(req, res){
+        if (req.session.user === undefined || req.session.user.is_admin !== true){
+            res.send({status: "error", error: "User does not have the rights to access tasks"});
+            return;
+        }
         var eventId = req.query.eventId;
         var userId = req.session.user.user_id;
         models.Task.getTasksForEvent(eventId, userId)

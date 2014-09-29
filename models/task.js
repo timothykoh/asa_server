@@ -121,6 +121,97 @@ function Task(db){
         return groupedObjArr;
     };
 
+    function groupTasks(taskObjArr){
+        // group assignees together for each time slot
+        var taskObjArr = taskObjArr.map(function(elem){
+            var assigneeArr, numAssignees;
+            if (elem.assigned_to_user_id === null){
+                numAssignees = 0;
+                assigneeArr = [];
+            } else{
+                numAssignees = 1;
+                assigneeArr = [{
+                    userId: elem.assigned_to_user_id,
+                    name: elem.assigned_to_name,
+                    isSelf: elem.assigned_to_self
+                }];
+            }
+            var dateObj = elem.date;
+            var dateStr = (dateObj.getUTCMonth() + 1) + "/" +
+                          dateObj.getUTCDate() + "/" + 
+                          dateObj.getUTCFullYear();
+            return {
+                taskId: elem.task_id,
+                name: elem.name,
+                createdBy: elem.created_by,
+                timeSlotId: elem.task_timeslot_id,
+                date: dateStr,
+                timeSlot: elem.timeslot,
+                numPeople: elem.num_people,
+                numAssignees: numAssignees,
+                assigneeArr: assigneeArr
+            };
+        });
+        taskObjArr = _objectGroupBy(taskObjArr, {
+            primaryKeyArr: ["date", "timeSlot"],
+            fieldsToConcat: ["assigneeArr"],
+            fieldsToSum: ["numAssignees"]
+        });
+
+        // group timeslots together for each task
+        taskObjArr = taskObjArr.map(function(elem){
+            
+            return {
+                taskId: elem.taskId,
+                name: elem.name,
+                createdBy: elem.createdBy,
+                totalNumPeople: elem.numPeople,
+                totalNumAssignees: elem.numAssignees,
+                timeSlotObjArr: [{
+                    timeSlotId: elem.timeSlotId,
+                    date: elem.date,
+                    timeSlot: elem.timeSlot,
+                    numPeople: elem.numPeople,
+                    numAssignees: elem.numAssignees,
+                    assigneeArr: elem.assigneeArr
+                }]
+            };
+        });
+
+        taskObjArr = _objectGroupBy(taskObjArr, {
+            primaryKeyArr: ["taskId"],
+            fieldsToConcat: ["timeSlotObjArr"],
+            fieldsToSum: ["totalNumPeople", "totalNumAssignees"]
+        });
+        return taskObjArr;
+    }
+
+    this.getTask = function(taskId, userId){
+        return db.query({
+            queryString: "SELECT task.task_id, task.name, created_by_user.name AS created_by,\
+                                 task_timeslot.task_timeslot_id, task_timeslot.date,\
+                                 task_timeslot.timeslot, task_timeslot.num_people,\
+                                 assigned_to_users.user_id AS assigned_to_user_id, assigned_to_users.name AS assigned_to_name,\
+                                 (assigned_to_users.user_id = $1) AS assigned_to_self\
+                          FROM task\
+                                INNER JOIN users AS created_by_user\
+                                ON created_by_user.user_id = task.created_by\
+                                LEFT OUTER JOIN task_to_timeslot\
+                                ON task_to_timeslot.task_id = task.task_id\
+                                LEFT OUTER JOIN task_timeslot\
+                                ON task_to_timeslot.task_timeslot_id = task_timeslot.task_timeslot_id\
+                                LEFT OUTER JOIN timeslot_to_user\
+                                ON timeslot_to_user.task_timeslot_id = task_timeslot.task_timeslot_id\
+                                LEFT OUTER JOIN users AS assigned_to_users\
+                                ON assigned_to_users.user_id = timeslot_to_user.user_id\
+                          WHERE task.task_id = $2;",
+            argumentArray: [userId, taskId]
+        }).then(function(results){
+            var taskObjArr = groupTasks(results.rows);
+            return taskObjArr[0];
+        });
+    }
+
     this.getTasksForEvent = function(eventId, userId){
         return db.query({
             queryString: "SELECT task.task_id, task.name, created_by_user.name AS created_by,\
@@ -144,68 +235,7 @@ function Task(db){
                           WHERE event_to_task.event_id = $2;",
             argumentArray: [userId, eventId]
         }).then(function(results){
-            // group assignees together for each time slot
-            var taskObjArr = results.rows.map(function(elem){
-                var assigneeArr, numAssignees;
-                if (elem.assigned_to_user_id === null){
-                    numAssignees = 0;
-                    assigneeArr = [];
-                } else{
-                    numAssignees = 1;
-                    assigneeArr = [{
-                        userId: elem.assigned_to_user_id,
-                        name: elem.assigned_to_name,
-                        isSelf: elem.assigned_to_self
-                    }];
-                }
-                var dateObj = elem.date;
-                var dateStr = (dateObj.getUTCMonth() + 1) + "/" +
-                              dateObj.getUTCDate() + "/" + 
-                              dateObj.getUTCFullYear();
-                return {
-                    taskId: elem.task_id,
-                    name: elem.name,
-                    createdBy: elem.created_by,
-                    timeSlotId: elem.task_timeslot_id,
-                    date: dateStr,
-                    timeSlot: elem.timeslot,
-                    numPeople: elem.num_people,
-                    numAssignees: numAssignees,
-                    assigneeArr: assigneeArr
-                };
-            });
-            taskObjArr = _objectGroupBy(taskObjArr, {
-                primaryKeyArr: ["date", "timeSlot"],
-                fieldsToConcat: ["assigneeArr"],
-                fieldsToSum: ["numAssignees"]
-            });
-
-            // group timeslots together for each task
-            taskObjArr = taskObjArr.map(function(elem){
-                
-                return {
-                    taskId: elem.taskId,
-                    name: elem.name,
-                    createdBy: elem.createdBy,
-                    totalNumPeople: elem.numPeople,
-                    totalNumAssignees: elem.numAssignees,
-                    timeSlotObjArr: [{
-                        timeSlotId: elem.timeSlotId,
-                        date: elem.date,
-                        timeSlot: elem.timeSlot,
-                        numPeople: elem.numPeople,
-                        numAssignees: elem.numAssignees,
-                        assigneeArr: elem.assigneeArr
-                    }]
-                };
-            });
-
-            taskObjArr = _objectGroupBy(taskObjArr, {
-                primaryKeyArr: ["taskId"],
-                fieldsToConcat: ["timeSlotObjArr"],
-                fieldsToSum: ["totalNumPeople", "totalNumAssignees"]
-            });
-            return taskObjArr;
+            return groupTasks(results.rows);
         });
     };
 
