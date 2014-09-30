@@ -77,4 +77,30 @@ module.exports = function(app, models){
             res.send({status: "error", error: err});
         });
     });
+
+    app.post("/event/update_description", function(req,res){
+        if (req.session.user === undefined || req.session.user.is_admin !== true){
+            res.send({status: "error", error: "User does not have the rights to update the description"});
+            return;
+        }
+        models.Event.updateDescription(req.body.eventId, req.body.description)
+        .then(function(){
+            res.send({status: "success"});
+        }, function(err){
+            res.send({status: "error", error: err});
+        });
+    });
+
+    app.post("/event/update_budget", function(req,res){
+        if (req.session.user === undefined || req.session.user.is_admin !== true){
+            res.send({status: "error", error: "User does not have the rights to update the budget"});
+            return;
+        }
+        models.Event.updateBudget(req.body.eventId, req.body.budget)
+        .then(function(){
+            res.send({status: "success"});
+        }, function(err){
+            res.send({status: "error", error: err});
+        });
+    });
 }

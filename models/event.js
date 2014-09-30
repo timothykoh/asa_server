@@ -54,6 +54,24 @@ function Event(db){
             argumentArray: [eventId, expenseId]
         });
     };
+
+    this.updateDescription = function(eventId, description){
+        return db.query({
+            queryString: "UPDATE event\
+                          SET description = $1\
+                          WHERE event_id = $2;",
+            argumentArray: [description, eventId]
+        });
+    };
+
+    this.updateBudget = function(eventId, budget){
+        return db.query({
+            queryString: "UPDATE event\
+                          SET budget = $1\
+                          WHERE event_id = $2;",
+            argumentArray: [budget, eventId]
+        });
+    };
 }
 
 
