@@ -20,6 +20,11 @@ function Task(db){
                 }
             }
 
+            if (timeSlotArgArr.length === 0){
+                // if no timeslots are set
+                return [];
+            }
+
             timeSlotQueryString = timeSlotQueryString.replace(/,$/g, "");
             timeSlotQueryString += "RETURNING task_timeslot_id;"
             return db.query({
@@ -53,6 +58,9 @@ function Task(db){
     };
 
     var _addTimeSlotsToTask = function(taskId, timeSlotIdArr){
+        if (timeSlotIdArr.length === 0){
+            return;
+        }
         var queryStr = "INSERT INTO task_to_timeslot (task_id, task_timeslot_id) VALUES ";
         for (var i = 0; i < timeSlotIdArr.length; i++){
             queryStr += "($1,$" + (i+2) + "),";
@@ -98,7 +106,7 @@ function Task(db){
                 // if any of the primary keys don't match, push a new obj on and
                 // start working on that
                 var primaryKey = primaryKeyArr[j];
-                if (currObj[primaryKey] != obj[primaryKey]){
+                if (obj[primaryKey] === null || currObj[primaryKey] != obj[primaryKey]){
                     currObj = obj;
                     groupedObjArr.push(currObj);
                     primaryKeysMatch = false;
@@ -137,9 +145,10 @@ function Task(db){
                 }];
             }
             var dateObj = elem.date;
-            var dateStr = (dateObj.getUTCMonth() + 1) + "/" +
-                          dateObj.getUTCDate() + "/" + 
-                          dateObj.getUTCFullYear();
+            var dateStr = dateObj === null ? "" : (dateObj.getUTCMonth() + 1) + "/" +
+                                                  dateObj.getUTCDate() + "/" + 
+                                                  dateObj.getUTCFullYear();
+            var numPeople = elem.num_people === null ? 0 : elem.num_people;
             return {
                 taskId: elem.task_id,
                 name: elem.name,
@@ -147,7 +156,7 @@ function Task(db){
                 timeSlotId: elem.task_timeslot_id,
                 date: dateStr,
                 timeSlot: elem.timeslot,
-                numPeople: elem.num_people,
+                numPeople: numPeople,
                 numAssignees: numAssignees,
                 assigneeArr: assigneeArr
             };
