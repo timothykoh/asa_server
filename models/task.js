@@ -141,6 +141,7 @@ function Task(db){
                 assigneeArr = [{
                     userId: elem.assigned_to_user_id,
                     name: elem.assigned_to_name,
+                    fbId: elem.assigned_to_fb_id,
                     isSelf: elem.assigned_to_self
                 }];
             }
@@ -201,6 +202,7 @@ function Task(db){
                                  task_timeslot.task_timeslot_id, task_timeslot.date,\
                                  task_timeslot.timeslot, task_timeslot.num_people,\
                                  assigned_to_users.user_id AS assigned_to_user_id, assigned_to_users.name AS assigned_to_name,\
+                                 assigned_to_users.fb_id AS assigned_to_fb_id,\
                                  (assigned_to_users.user_id = $1) AS assigned_to_self\
                           FROM task\
                                 INNER JOIN users AS created_by_user\
@@ -227,6 +229,7 @@ function Task(db){
                                  task_timeslot.task_timeslot_id, task_timeslot.date,\
                                  task_timeslot.timeslot, task_timeslot.num_people,\
                                  assigned_to_users.user_id AS assigned_to_user_id, assigned_to_users.name AS assigned_to_name,\
+                                 assigned_to_users.fb_id AS assigned_to_fb_id,\
                                  (assigned_to_users.user_id = $1) AS assigned_to_self\
                           FROM event_to_task\
                                 INNER JOIN task\
