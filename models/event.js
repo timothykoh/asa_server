@@ -72,6 +72,57 @@ function Event(db){
             argumentArray: [budget, eventId]
         });
     };
+
+    this.selectGoing = function(eventId, userId){
+        return db.query({
+            queryString: "INSERT INTO event_to_attendance (event_id, user_id)\
+                          VALUES ($1, $2);",
+            argumentArray: [eventId, userId]
+        });
+    };
+
+    this.selectNotGoing = function(eventId, userId){
+        return db.query({
+            queryString: "DELETE FROM event_to_attendance\
+                          WHERE event_id = $1\
+                          AND user_id = $2;",
+            argumentArray: [eventId, userId]
+        });
+    };
+
+    this.getAttendance = function(eventId, userId){
+        return db.query({
+            queryString: "SELECT is_going\
+                          FROM event_to_attendance\
+                          WHERE event_id = $1\
+                          AND user_id = $2;",
+            argumentArray: [eventId, userId]
+        }).then(function(results){
+            if (results.rows.length === 0){
+                return undefined;
+            }
+            return results.rows[0].is_going;
+        });
+    };
+
+    this.updateAttendance = function(eventId, userId, isGoing){
+        return db.query({
+            queryString: "UPDATE event_to_attendance\
+                          SET is_going = $1\
+                          WHERE event_id = $2\
+                          AND user_id = $3\
+                          RETURNING 1;",
+            argumentArray: [isGoing, eventId, userId]
+        }).then(function(results){
+            if (results.rows.length === 0){
+                return db.query({
+                    queryString: "INSERT INTO event_to_attendance (event_id, user_id, is_going)\
+                                  VALUES ($1, $2, $3);",
+                    argumentArray: [eventId, userId, isGoing]
+                });
+            }
+        });
+    };
 }
 
 

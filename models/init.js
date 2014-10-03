@@ -85,6 +85,18 @@ function Init(db){
         argumentArray: []
     };
 
+    var _createEventToAttendanceQuery = {
+        queryString: "CREATE TABLE IF NOT EXISTS event_to_attendance(\
+                            event_id            int,\
+                            user_id             int,\
+                            is_going            boolean,\
+                            FOREIGN KEY(event_id) REFERENCES event(event_id) ON DELETE CASCADE,\
+                            FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,\
+                            PRIMARY KEY(event_id, user_id)\
+                    );",
+        argumentArray: []
+    };
+
     var _createNewsQuery = {
         queryString: "CREATE TABLE IF NOT EXISTS news(\
                             news_id         serial primary key,\
@@ -138,6 +150,7 @@ function Init(db){
                 "DROP TABLE task_to_timeslot cascade;" +
                 "DROP TABLE timeslot_to_user cascade;" +
                 "DROP TABLE event_to_task cascade;" +
+                "DROP TABLE event_to_attendance cascade;" +
                 "DROP TABLE news cascade;" +
                 "DROP TABLE expense cascade;" +
                 "DROP TABLE event_to_expense cascade;" +
@@ -157,6 +170,7 @@ function Init(db){
                            _createTaskToTimeslotQuery,
                            _createTimeslotToUserQuery,
                            _createEventToTaskQuery,
+                           _createEventToAttendanceQuery,
                            _createNewsQuery,
                            _createExpenseQuery,
                            _createEventToExpenseQuery,

@@ -103,4 +103,30 @@ module.exports = function(app, models){
             res.send({status: "error", error: err});
         });
     });
+
+    app.post("/event/attendance", function(req, res){
+        if (req.session.user === undefined){
+            res.send({status:"error", error: "User is not logged in"});
+            return;
+        }
+        models.Event.updateAttendance(req.body.eventId, req.session.user.user_id, req.body.isGoing)
+        .then(function(){
+            res.send({status: "success"});
+        }, function(err){
+            res.send({status: "error", error: err});
+        });
+    });
+
+    app.get("/event/attendance", function(req, res){
+        if (req.session.user === undefined){
+            res.send({status:"error", error: "User is not logged in"});
+            return;
+        }
+        models.Event.getAttendance(req.query.eventId, req.session.user.user_id)
+        .then(function(results){
+            res.send({status: "success", results: results});
+        }, function(err){
+            res.send({status: "error", error: err});
+        });
+    });
 }
