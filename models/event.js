@@ -22,7 +22,8 @@ function Event(db){
             queryString: "SELECT event.event_id, event.name, event.description, event.date, event.location, event.budget, users.name AS created_by\
                           FROM event\
                               INNER JOIN users\
-                              ON event.created_by = users.user_id;",
+                              ON event.created_by = users.user_id\
+                          ORDER BY event.date DESC;",
             argumentArray: []
         }).then(function(results){
             return results.rows;
