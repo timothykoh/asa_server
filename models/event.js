@@ -153,7 +153,7 @@ function Event(db){
                 notGoingArr: notGoingArr.slice(0, k)
             };
         });
-    }
+    };
 }
 
 

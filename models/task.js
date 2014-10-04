@@ -129,6 +129,32 @@ function Task(db){
         return groupedObjArr;
     };
 
+    this.getTask = function(taskId, userId){
+        return db.query({
+            queryString: "SELECT task.task_id, task.name, created_by_user.name AS created_by,\
+                                 task_timeslot.task_timeslot_id, task_timeslot.date,\
+                                 task_timeslot.timeslot, task_timeslot.num_people,\
+                                 assigned_to_users.user_id AS assigned_to_user_id, assigned_to_users.name AS assigned_to_name,\
+                                 assigned_to_users.fb_id AS assigned_to_fb_id,\
+                                 (assigned_to_users.user_id = $1) AS assigned_to_self\
+                          FROM task\
+                                INNER JOIN users AS created_by_user\
+                                ON created_by_user.user_id = task.created_by\
+                                LEFT OUTER JOIN task_to_timeslot\
+                                ON task_to_timeslot.task_id = task.task_id\
+                                LEFT OUTER JOIN task_timeslot\
+                                ON task_to_timeslot.task_timeslot_id = task_timeslot.task_timeslot_id\
+                                LEFT OUTER JOIN timeslot_to_user\
+                                ON timeslot_to_user.task_timeslot_id = task_timeslot.task_timeslot_id\
+                                LEFT OUTER JOIN users AS assigned_to_users\
+                                ON assigned_to_users.user_id = timeslot_to_user.user_id\
+                          WHERE task.task_id = $2;",
+            argumentArray: [userId, taskId]
+        }).then(function(results){
+            var taskObjArr = groupTasks(results.rows);
+            return taskObjArr[0];
+        });
+    }
     function groupTasks(taskObjArr){
         // group assignees together for each time slot
         var taskObjArr = taskObjArr.map(function(elem){
@@ -195,34 +221,6 @@ function Task(db){
         });
         return taskObjArr;
     }
-
-    this.getTask = function(taskId, userId){
-        return db.query({
-            queryString: "SELECT task.task_id, task.name, created_by_user.name AS created_by,\
-                                 task_timeslot.task_timeslot_id, task_timeslot.date,\
-                                 task_timeslot.timeslot, task_timeslot.num_people,\
-                                 assigned_to_users.user_id AS assigned_to_user_id, assigned_to_users.name AS assigned_to_name,\
-                                 assigned_to_users.fb_id AS assigned_to_fb_id,\
-                                 (assigned_to_users.user_id = $1) AS assigned_to_self\
-                          FROM task\
-                                INNER JOIN users AS created_by_user\
-                                ON created_by_user.user_id = task.created_by\
-                                LEFT OUTER JOIN task_to_timeslot\
-                                ON task_to_timeslot.task_id = task.task_id\
-                                LEFT OUTER JOIN task_timeslot\
-                                ON task_to_timeslot.task_timeslot_id = task_timeslot.task_timeslot_id\
-                                LEFT OUTER JOIN timeslot_to_user\
-                                ON timeslot_to_user.task_timeslot_id = task_timeslot.task_timeslot_id\
-                                LEFT OUTER JOIN users AS assigned_to_users\
-                                ON assigned_to_users.user_id = timeslot_to_user.user_id\
-                          WHERE task.task_id = $2;",
-            argumentArray: [userId, taskId]
-        }).then(function(results){
-            var taskObjArr = groupTasks(results.rows);
-            return taskObjArr[0];
-        });
-    }
-
     this.getTasksForEvent = function(eventId, userId){
         return db.query({
             queryString: "SELECT task.task_id, task.name, created_by_user.name AS created_by,\
@@ -248,6 +246,50 @@ function Task(db){
             argumentArray: [userId, eventId]
         }).then(function(results){
             return groupTasks(results.rows);
+        });
+    };
+
+    this.getUserTasksForEvent = function(eventId, userId){
+        return db.query({
+            queryString: "SELECT task.task_id, task.name,\
+                                 task_timeslot.task_timeslot_id, task_timeslot.date,\
+                                 task_timeslot.timeslot\
+                          FROM event_to_task\
+                                INNER JOIN task\
+                                ON task.task_id = event_to_task.task_id\
+                                INNER JOIN task_to_timeslot\
+                                ON task_to_timeslot.task_id = task.task_id\
+                                INNER JOIN task_timeslot\
+                                ON task_timeslot.task_timeslot_id = task_to_timeslot.task_timeslot_id\
+                                INNER JOIN timeslot_to_user\
+                                ON timeslot_to_user.task_timeslot_id = task_timeslot.task_timeslot_id\
+                                INNER JOIN users\
+                                ON users.user_id = timeslot_to_user.user_id\
+                                AND users.user_id = $1\
+                          WHERE event_to_task.event_id = $2;",
+            argumentArray: [userId, eventId]
+        }).then(function(results){
+            var taskObjArr = results.rows;
+            taskObjArr = taskObjArr.map(function(elem){
+                var dateObj = elem.date;
+                var dateStr = dateObj === null ? "" : (dateObj.getUTCMonth() + 1) + "/" +
+                                                       dateObj.getUTCDate() + "/" + 
+                                                       dateObj.getUTCFullYear();
+                return {
+                    taskId: elem.task_id,
+                    name: elem.name,
+                    timeSlotObjArr: [{
+                        timeSlotId: elem.task_timeslot_id,
+                        date: dateStr,
+                        timeSlot: elem.timeslot
+                    }]
+                };
+            });
+            taskObjArr = _objectGroupBy(taskObjArr, {
+                primaryKeyArr: ["taskId"],
+                fieldsToConcat: ["timeSlotObjArr"]
+            });
+            return taskObjArr;
         });
     };
 
@@ -302,6 +344,7 @@ function Task(db){
             argumentArray: [timeSlotId, userId]
         });
     };
+
 };
 
 module.exports = function(db){
