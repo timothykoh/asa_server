@@ -129,4 +129,13 @@ module.exports = function(app, models){
             res.send({status: "error", error: err});
         });
     });
+
+    app.get("/event/attendance/all", function(req, res){
+        models.Event.getAllAttendance(req.query.eventId)
+        .then(function(attendanceObj){
+            res.send({status: "success", results: attendanceObj});
+        }, function(err){
+            res.send({status: "error", error: err});
+        });
+    });
 }

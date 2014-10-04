@@ -123,6 +123,37 @@ function Event(db){
             }
         });
     };
+
+    this.getAllAttendance = function(eventId){
+        return db.query({
+            queryString: "SELECT users.user_id, users.name, users.fb_id, event_to_attendance.is_going\
+                          FROM event_to_attendance\
+                                INNER JOIN users\
+                                ON users.user_id = event_to_attendance.user_id\
+                          WHERE event_id = $1;",
+            argumentArray: [eventId]
+        }).then(function(results){
+            var rows = results.rows;
+            var goingArr = new Array(rows.length);
+            var j = 0;
+            var notGoingArr = new Array(rows.length);
+            var k = 0;
+            for (var i = 0; i < rows.length; i++){
+                var row = rows[i];
+                if (row.is_going){
+                    goingArr[j] = row;
+                    j++;
+                } else{
+                    notGoingArr[k] = row;
+                    k++;
+                }
+            }
+            return {
+                goingArr: goingArr.slice(0,j),
+                notGoingArr: notGoingArr.slice(0, k)
+            };
+        });
+    }
 }
 
 
