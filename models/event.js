@@ -17,6 +17,23 @@ function Event(db){
         });
     };
 
+    this.getEvent = function(eventId){
+        return db.query({
+            queryString: "SELECT event.event_id, event.name, event.description, event.date, event.location, event.budget, users.name AS created_by\
+                          FROM event\
+                              INNER JOIN users\
+                              ON event.created_by = users.user_id\
+                          WHERE event_id = $1;",
+            argumentArray: [eventId]
+        }).then(function(results){
+            if (results.rows.length > 0){
+                return results.rows[0];
+            } else{
+                return undefined;
+            }
+        });
+    };
+
     this.getEvents = function(){
         return db.query({
             queryString: "SELECT event.event_id, event.name, event.description, event.date, event.location, event.budget, users.name AS created_by\

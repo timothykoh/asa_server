@@ -50,6 +50,22 @@ module.exports = function(app, models){
     });
 
     app.get("/event", function(req, res){
+        models.Event.getEvent(req.query.eventId).then(function(eventObj){
+            if (eventObj === undefined){
+                return res.send({status: "error", error: "Invalid event id"});
+            }
+            var dateObj = eventObj.date;
+            eventObj.date = (dateObj.getUTCMonth() + 1) + "/" +
+                            dateObj.getUTCDate() + "/" + 
+                            dateObj.getUTCFullYear();
+            res.send({status: "success", results: eventObj});
+        }, function(err){
+            console.error(err);
+            res.send({status: "error", error: err});
+        });
+    });
+
+    app.get("/event/all", function(req, res){
         models.Event.getEvents().then(function(eventObjArr){
             eventObjArr.map(function(eventObj){
                 var dateObj = eventObj.date;
