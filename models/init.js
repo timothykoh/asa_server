@@ -46,7 +46,7 @@ function Init(db){
         queryString: "CREATE TABLE IF NOT EXISTS task_timeslot(\
                             task_timeslot_id        serial primary key,\
                             date                    date,\
-                            timeslot                int,\
+                            timeslot                varchar(10),\
                             num_people              int\
                         );",
         argumentArray: []
