@@ -148,7 +148,8 @@ function Task(db){
                                 ON timeslot_to_user.task_timeslot_id = task_timeslot.task_timeslot_id\
                                 LEFT OUTER JOIN users AS assigned_to_users\
                                 ON assigned_to_users.user_id = timeslot_to_user.user_id\
-                          WHERE task.task_id = $2;",
+                          WHERE task.task_id = $2\
+                          ORDER BY task_timeslot.date;",
             argumentArray: [userId, taskId]
         }).then(function(results){
             var taskObjArr = groupTasks(results.rows);
@@ -242,7 +243,8 @@ function Task(db){
                                 ON timeslot_to_user.task_timeslot_id = task_timeslot.task_timeslot_id\
                                 LEFT OUTER JOIN users AS assigned_to_users\
                                 ON assigned_to_users.user_id = timeslot_to_user.user_id\
-                          WHERE event_to_task.event_id = $2;",
+                          WHERE event_to_task.event_id = $2\
+                          ORDER BY task.task_id;",
             argumentArray: [userId, eventId]
         }).then(function(results){
             return groupTasks(results.rows);
@@ -266,7 +268,8 @@ function Task(db){
                                 INNER JOIN users\
                                 ON users.user_id = timeslot_to_user.user_id\
                                 AND users.user_id = $1\
-                          WHERE event_to_task.event_id = $2;",
+                          WHERE event_to_task.event_id = $2\
+                          ORDER BY task.task_id;",
             argumentArray: [userId, eventId]
         }).then(function(results){
             var taskObjArr = results.rows;
